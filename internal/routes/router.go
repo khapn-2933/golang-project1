@@ -21,6 +21,7 @@ type RouterDependencies struct {
 	AuthHandler    *handler.AuthHandler
 	OAuthHandler   *handler.OAuthHandler
 	ProfileHandler *handler.ProfileHandler
+	CategoryHandler *handler.CategoryHandler
 	CorsMiddleware gin.HandlerFunc
 	AuthMiddleware *middleware.AuthMiddleware
 	UploadPath     string
@@ -92,7 +93,15 @@ func SetupRouter(deps *RouterDependencies) *gin.Engine {
 		admin.Use(deps.AuthMiddleware.RequireAuth())
 		admin.Use(deps.AuthMiddleware.RequireAdmin())
 		{
-			_ = admin // TODO: Add admin routes
+			// Category management
+			categories := admin.Group("/categories")
+			{
+				categories.POST("", deps.CategoryHandler.Create)
+				categories.GET("", deps.CategoryHandler.List)
+				categories.GET("/:id", deps.CategoryHandler.GetByID)
+				categories.PUT("/:id", deps.CategoryHandler.Update)
+				categories.DELETE("/:id", deps.CategoryHandler.Delete)
+			}
 		}
 	}
 
