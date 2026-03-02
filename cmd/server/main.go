@@ -56,11 +56,13 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	socialAuthRepo := repository.NewSocialAuthRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
+	productRepo := repository.NewProductRepository(db)
 
 	authService := service.NewAuthService(userRepo, &cfg.JWT)
 	oauthService := service.NewOAuthService(userRepo, socialAuthRepo, authService, &cfg.OAuth)
 	profileService := service.NewProfileService(userRepo, &cfg.Upload, routes.UploadURLPrefix)
 	categoryService := service.NewCategoryService(categoryRepo)
+	productService := service.NewProductService(productRepo, categoryRepo)
 
 	funcMap := template.FuncMap{
 		"inc": func(i int) int { return i + 1 },
@@ -79,6 +81,8 @@ func main() {
 	profileHandler := handler.NewProfileHandler(profileService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 	adminCategoryHandler := handler.NewAdminCategoryHandler(categoryService, funcMap)
+	productHandler := handler.NewProductHandler(productService)
+	adminProductHandler := handler.NewAdminProductHandler(productService, categoryService, funcMap)
 
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
@@ -89,6 +93,8 @@ func main() {
 		ProfileHandler:  profileHandler,
 		CategoryHandler: categoryHandler,
 		AdminCategoryHandler: adminCategoryHandler,
+		ProductHandler:       productHandler,
+		AdminProductHandler:  adminProductHandler,
 		CorsMiddleware:  middleware.CORSConfig(),
 		AuthMiddleware:  authMiddleware,
 		UploadPath:      cfg.Upload.Path,

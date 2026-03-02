@@ -1,0 +1,146 @@
+{{ template "layout" . }}
+
+{{ define "page_content" }}
+<div style="max-width:760px">
+  <div style="margin-bottom:20px">
+    <a href="/admin/products" class="btn btn-outline btn-sm">&larr; Quay lại</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        {{ if .Product }}Sửa sản phẩm{{ else }}Thêm sản phẩm mới{{ end }}
+      </h2>
+    </div>
+
+    {{ if .Errors }}
+    <div class="alert alert-error">
+      {{ range .Errors }}<div>{{ . }}</div>{{ end }}
+    </div>
+    {{ end }}
+
+    {{ if .Product }}
+    <form method="POST" action="/admin/products/{{ .Product.ID }}/update">
+    {{ else }}
+    <form method="POST" action="/admin/products">
+    {{ end }}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tên sản phẩm <span style="color:#e94560">*</span></label>
+          <input type="text" name="name" class="form-control" required
+                 value="{{ if .Product }}{{ .Product.Name }}{{ else if .Form }}{{ .Form.Name }}{{ end }}"
+                 placeholder="VD: Cà phê sữa đá..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slug</label>
+          <input type="text" name="slug" class="form-control"
+                 value="{{ if .Product }}{{ .Product.Slug }}{{ else if .Form }}{{ .Form.Slug }}{{ end }}"
+                 placeholder="Tự động tạo nếu để trống" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Danh mục <span style="color:#e94560">*</span></label>
+          <select name="category_id" class="form-control" required>
+            <option value="">-- Chọn danh mục --</option>
+            {{ range .Categories }}
+            {{ $selected := false }}
+            {{ if $.Product }}{{ if eq $.Product.CategoryID .ID }}{{ $selected = true }}{{ end }}{{ end }}
+            <option value="{{ .ID }}" {{ if $selected }}selected{{ end }}>{{ .Name }}</option>
+            {{ end }}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phân loại <span style="color:#e94560">*</span></label>
+          <select name="classify" class="form-control" required>
+            <option value="">-- Chọn loại --</option>
+            {{ $classify := "" }}
+            {{ if .Product }}{{ $classify = .Product.Classify }}{{ else if .Form }}{{ $classify = .Form.Classify }}{{ end }}
+            <option value="food"  {{ if eq $classify "food"  }}selected{{ end }}>Đồ ăn</option>
+            <option value="drink" {{ if eq $classify "drink" }}selected{{ end }}>Đồ uống</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mô tả</label>
+        <textarea name="description" class="form-control" style="min-height:110px"
+                  placeholder="Mô tả chi tiết sản phẩm...">{{ if .Product }}{{ deref .Product.Description }}{{ else if .Form }}{{ .Form.Description }}{{ end }}</textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Giá (VNĐ) <span style="color:#e94560">*</span></label>
+          <input type="number" name="price" class="form-control" min="0" step="1000" required
+                 value="{{ if .Product }}{{ printf "%.0f" .Product.Price }}{{ else if .Form }}{{ printf "%.0f" .Form.Price }}{{ end }}"
+                 placeholder="VD: 35000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tồn kho</label>
+          <input type="number" name="stock" class="form-control" min="0"
+                 value="{{ if .Product }}{{ .Product.Stock }}{{ else if .Form }}{{ .Form.Stock }}{{ end }}" />
+        </div>
+      </div>
+
+      <div class="form-group" style="max-width:240px">
+        <label class="form-label">Trạng thái</label>
+        <select name="status" class="form-control">
+          {{ $status := "active" }}
+          {{ if .Product }}{{ $status = .Product.Status }}{{ else if .Form }}{{ $status = .Form.Status }}{{ end }}
+          <option value="active"       {{ if eq $status "active"       }}selected{{ end }}>Hoạt động</option>
+          <option value="inactive"     {{ if eq $status "inactive"     }}selected{{ end }}>Ẩn</option>
+          <option value="out_of_stock" {{ if eq $status "out_of_stock" }}selected{{ end }}>Hết hàng</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ảnh sản phẩm</label>
+        <div class="form-hint" style="margin-bottom:8px">
+          Nhập URL ảnh, mỗi dòng một URL. Ảnh đầu tiên sẽ là ảnh chính.
+          {{ if .Product }}Để trống nếu không muốn thay đổi ảnh.{{ end }}
+        </div>
+
+        {{ if .Product }}
+        {{ if .Product.Images }}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          {{ range .Product.Images }}
+          <div style="position:relative">
+            <img src="{{ .ImageURL }}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:2px solid {{ if .IsPrimary }}#e94560{{ else }}#e5e5e5{{ end }}" />
+            {{ if .IsPrimary }}<span style="position:absolute;bottom:2px;left:2px;background:#e94560;color:#fff;font-size:.6rem;padding:1px 4px;border-radius:3px">Chính</span>{{ end }}
+          </div>
+          {{ end }}
+        </div>
+        {{ end }}
+        {{ end }}
+
+        <div id="image-inputs">
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <input type="url" name="image_urls" class="form-control" placeholder="https://..." />
+            <button type="button" class="btn btn-outline btn-sm" onclick="addImageInput()" style="white-space:nowrap">+ Thêm</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">
+          {{ if .Product }}Lưu thay đổi{{ else }}Tạo sản phẩm{{ end }}
+        </button>
+        <a href="/admin/products" class="btn btn-outline">Huỷ</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function addImageInput() {
+  const container = document.getElementById('image-inputs');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px';
+  div.innerHTML = '<input type="url" name="image_urls" class="form-control" placeholder="https://..." />'
+    + '<button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" style="white-space:nowrap">Xoá</button>';
+  container.appendChild(div);
+}
+</script>
+{{ end }}

@@ -23,6 +23,8 @@ type RouterDependencies struct {
 	ProfileHandler *handler.ProfileHandler
 	CategoryHandler *handler.CategoryHandler
 	AdminCategoryHandler *handler.AdminCategoryHandler
+	ProductHandler       *handler.ProductHandler
+	AdminProductHandler  *handler.AdminProductHandler
 	CorsMiddleware gin.HandlerFunc
 	AuthMiddleware *middleware.AuthMiddleware
 	UploadPath     string
@@ -73,7 +75,11 @@ func SetupRouter(deps *RouterDependencies) *gin.Engine {
 		// Public routes
 		public := v1.Group("")
 		{
-			_ = public // TODO: Add public routes (products list, etc.)
+			products := public.Group("/products")
+			{
+				products.GET("", deps.ProductHandler.List)
+				products.GET("/:slug", deps.ProductHandler.GetBySlug)
+			}
 		}
 
 		// Protected routes (require authentication)
@@ -116,6 +122,16 @@ func SetupRouter(deps *RouterDependencies) *gin.Engine {
 			categories.GET("/:id/edit", deps.AdminCategoryHandler.Edit)
 			categories.POST("/:id/update", deps.AdminCategoryHandler.Update)
 			categories.POST("/:id/delete", deps.AdminCategoryHandler.Delete)
+		}
+
+		products := adminSSR.Group("/products")
+		{
+			products.GET("", deps.AdminProductHandler.List)
+			products.GET("/new", deps.AdminProductHandler.New)
+			products.POST("", deps.AdminProductHandler.Create)
+			products.GET("/:id/edit", deps.AdminProductHandler.Edit)
+			products.POST("/:id/update", deps.AdminProductHandler.Update)
+			products.POST("/:id/delete", deps.AdminProductHandler.Delete)
 		}
 	}
 

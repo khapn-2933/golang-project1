@@ -1,0 +1,153 @@
+{{ template "layout" . }}
+
+{{ define "page_content" }}
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Sản phẩm</h2>
+    <a href="/admin/products/new" class="btn btn-primary">+ Thêm mới</a>
+  </div>
+
+  <form method="GET" action="/admin/products" class="filter-bar">
+    <div class="form-group">
+      <label class="form-label">Tìm kiếm</label>
+      <input type="text" name="search" class="form-control" placeholder="Tên sản phẩm..."
+             value="{{ index .Query "Search" }}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phân loại</label>
+      <select name="classify" class="form-control">
+        <option value="">Tất cả</option>
+        <option value="food"  {{ if eq (index .Query "Classify") "food"  }}selected{{ end }}>Đồ ăn</option>
+        <option value="drink" {{ if eq (index .Query "Classify") "drink" }}selected{{ end }}>Đồ uống</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Danh mục</label>
+      <select name="category_id" class="form-control">
+        <option value="">Tất cả</option>
+        {{ range .Categories }}
+        <option value="{{ .ID }}" {{ if eq (printf "%d" .ID) (printf "%d" (index $.Query "CategoryID")) }}selected{{ end }}>
+          {{ .Name }}
+        </option>
+        {{ end }}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Trạng thái</label>
+      <select name="status" class="form-control">
+        <option value="">Tất cả</option>
+        <option value="active"       {{ if eq (index .Query "Status") "active"       }}selected{{ end }}>Hoạt động</option>
+        <option value="inactive"     {{ if eq (index .Query "Status") "inactive"     }}selected{{ end }}>Ẩn</option>
+        <option value="out_of_stock" {{ if eq (index .Query "Status") "out_of_stock" }}selected{{ end }}>Hết hàng</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">&nbsp;</label>
+      <button type="submit" class="btn btn-outline">Lọc</button>
+    </div>
+  </form>
+
+  {{ if .Products }}
+  <table>
+    <thead>
+      <tr>
+        <th style="width:50px">ID</th>
+        <th style="width:60px">Ảnh</th>
+        <th>Tên</th>
+        <th>Danh mục</th>
+        <th>Loại</th>
+        <th>Giá</th>
+        <th>Kho</th>
+        <th>Đánh giá</th>
+        <th>Trạng thái</th>
+        <th style="width:140px">Thao tác</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Products }}
+      <tr>
+        <td>{{ .ID }}</td>
+        <td>
+          {{ if .PrimaryImage }}
+          <img src="{{ .PrimaryImage.ImageURL }}" alt="{{ .Name }}"
+               style="width:44px;height:44px;object-fit:cover;border-radius:4px;border:1px solid #eee" />
+          {{ else }}
+          <div style="width:44px;height:44px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:.7rem">
+            N/A
+          </div>
+          {{ end }}
+        </td>
+        <td>
+          <strong>{{ .Name }}</strong>
+          <br/><code style="font-size:.75rem;color:#888">{{ .Slug }}</code>
+        </td>
+        <td style="color:#555;font-size:.85rem">{{ .CategoryName }}</td>
+        <td>
+          {{ if eq .Classify "food" }}
+            <span class="badge" style="background:#fef3c7;color:#92400e">Đồ ăn</span>
+          {{ else }}
+            <span class="badge" style="background:#dbeafe;color:#1e40af">Đồ uống</span>
+          {{ end }}
+        </td>
+        <td style="font-weight:600">{{ printf "%.0f" .Price }}đ</td>
+        <td>{{ .Stock }}</td>
+        <td style="font-size:.85rem">
+          {{ printf "%.1f" .RatingAverage }} ★
+          <span style="color:#aaa">({{ .RatingCount }})</span>
+        </td>
+        <td>
+          {{ if eq .Status "active" }}
+            <span class="badge badge-active">Hoạt động</span>
+          {{ else if eq .Status "inactive" }}
+            <span class="badge badge-inactive">Ẩn</span>
+          {{ else }}
+            <span class="badge" style="background:#fef3c7;color:#92400e">Hết hàng</span>
+          {{ end }}
+        </td>
+        <td>
+          <div class="actions">
+            <a href="/admin/products/{{ .ID }}/edit" class="btn btn-sm btn-warning">Sửa</a>
+            <form class="delete-form" method="POST" action="/admin/products/{{ .ID }}/delete"
+                  onsubmit="return confirm('Xoá sản phẩm này?')">
+              <button type="submit" class="btn btn-sm btn-danger">Xoá</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+    <span style="font-size:.85rem;color:#888">Tổng {{ .Pagination.Total }} sản phẩm</span>
+    {{ if gt .Pagination.TotalPages 1 }}
+    <div class="pagination">
+      {{ if gt .Pagination.Page 1 }}
+        <a href="?page={{ dec .Pagination.Page }}">&lsaquo;</a>
+      {{ else }}
+        <span class="disabled">&lsaquo;</span>
+      {{ end }}
+      {{ range .Pagination.Pages }}
+        {{ if eq . $.Pagination.Page }}
+          <span class="active">{{ . }}</span>
+        {{ else }}
+          <a href="?page={{ . }}">{{ . }}</a>
+        {{ end }}
+      {{ end }}
+      {{ if lt .Pagination.Page .Pagination.TotalPages }}
+        <a href="?page={{ inc .Pagination.Page }}">&rsaquo;</a>
+      {{ else }}
+        <span class="disabled">&rsaquo;</span>
+      {{ end }}
+    </div>
+    {{ end }}
+  </div>
+
+  {{ else }}
+  <div style="text-align:center;padding:48px;color:#aaa">
+    Chưa có sản phẩm nào.
+    <a href="/admin/products/new" style="color:#e94560">Thêm ngay</a>
+  </div>
+  {{ end }}
+</div>
+{{ end }}
