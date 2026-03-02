@@ -48,9 +48,11 @@ func main() {
 
 	log.Println("Database connected successfully!")
 
-	// Ensure upload directory exists
-	if err := os.MkdirAll(cfg.Upload.Path, 0755); err != nil {
-		log.Fatalf("Failed to create upload directory: %v", err)
+	// Ensure upload directory exists (only when a path is configured)
+	if cfg.Upload.Path != "" {
+		if err := os.MkdirAll(cfg.Upload.Path, 0755); err != nil {
+			log.Fatalf("Failed to create upload directory: %v", err)
+		}
 	}
 
 	// Initialize repositories
@@ -60,7 +62,7 @@ func main() {
 	// Initialize services
 	authService := service.NewAuthService(userRepo, &cfg.JWT)
 	oauthService := service.NewOAuthService(userRepo, socialAuthRepo, authService, &cfg.OAuth)
-	profileService := service.NewProfileService(userRepo, &cfg.Upload)
+	profileService := service.NewProfileService(userRepo, &cfg.Upload, routes.UploadURLPrefix)
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler()

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kha/foods-drinks/internal/dto"
@@ -30,7 +32,7 @@ func NewProfileHandler(profileService *service.ProfileService) *ProfileHandler {
 // @Accept multipart/form-data
 // @Produce json
 // @Security BearerAuth
-// @Param avatar formance file true "Avatar image file"
+// @Param avatar formData file true "Avatar image file"
 // @Success 200 {object} dto.AvatarResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
@@ -51,6 +53,25 @@ func (h *ProfileHandler) UploadAvatar(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
 			Message: "Avatar file is required",
+		})
+		return
+	}
+
+	// Early size check – gives the UI a clear message without hitting the service layer
+	if file.Size > h.profileService.MaxFileSize() {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "file_too_large",
+			Message: "File size exceeds the maximum allowed size (" + h.profileService.MaxSizeHuman() + ")",
+		})
+		return
+	}
+
+	// Early extension check – gives the UI a clear message without hitting the service layer
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !h.profileService.IsAllowedExtension(ext) {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "invalid_file_type",
+			Message: "Only " + h.profileService.AllowedTypesHuman() + " files are allowed",
 		})
 		return
 	}
@@ -110,12 +131,12 @@ func (h *ProfileHandler) handleProfileError(c *gin.Context, err error) {
 	case errors.Is(err, service.ErrFileTooLarge):
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "file_too_large",
-			Message: "File size exceeds the maximum allowed size (2MB)",
+			Message: "File size exceeds the maximum allowed size (" + h.profileService.MaxSizeHuman() + ")",
 		})
 	case errors.Is(err, service.ErrInvalidFileType):
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "invalid_file_type",
-			Message: "Only jpg, jpeg, png, and webp files are allowed",
+			Message: "Only " + h.profileService.AllowedTypesHuman() + " files are allowed",
 		})
 	default:
 		log.Printf("Profile error: %v", err)
