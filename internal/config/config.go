@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -14,6 +16,24 @@ type Config struct {
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	OAuth    OAuthConfig    `mapstructure:"oauth"`
 	Upload   UploadConfig   `mapstructure:"upload"`
+	Email    EmailConfig    `mapstructure:"email"`
+}
+
+type EmailConfig struct {
+	Enabled           bool   `mapstructure:"enabled"`
+	SMTPHost          string `mapstructure:"smtp_host"`
+	SMTPPort          int    `mapstructure:"smtp_port"`
+	Username          string `mapstructure:"username"`
+	Password          string `mapstructure:"password"`
+	FromEmail         string `mapstructure:"from_email"`
+	FromName          string `mapstructure:"from_name"`
+	AdminRecipient    string `mapstructure:"admin_recipient"`
+	SubjectPrefix     string `mapstructure:"subject_prefix"`
+	OrderTemplatePath string `mapstructure:"order_template_path"`
+	MaxRetries        int    `mapstructure:"max_retries"`
+	RetryDelaySeconds int    `mapstructure:"retry_delay_seconds"`
+	MaxWorkers        int    `mapstructure:"max_workers"`
+	QueueSize         int    `mapstructure:"queue_size"`
 }
 
 type UploadConfig struct {
@@ -64,6 +84,7 @@ type OAuthProviderConfig struct {
 func LoadConfig(path string) (*Config, error) {
 	viper.SetConfigFile(path)
 	viper.SetConfigType("yaml")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	viper.AutomaticEnv()
 
@@ -76,7 +97,27 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	applySensitiveEnvOverrides(&config)
+
 	return &config, nil
+}
+
+func applySensitiveEnvOverrides(cfg *Config) {
+	if cfg == nil {
+		return
+	}
+
+	if value := strings.TrimSpace(os.Getenv("EMAIL_PASSWORD")); value != "" {
+		cfg.Email.Password = value
+	}
+
+	if value := strings.TrimSpace(os.Getenv("DATABASE_PASSWORD")); value != "" {
+		cfg.Database.Password = value
+	}
+
+	if value := strings.TrimSpace(os.Getenv("JWT_SECRET")); value != "" {
+		cfg.JWT.Secret = value
+	}
 }
 
 func (d *DatabaseConfig) DSN() string {

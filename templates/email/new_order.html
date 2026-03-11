@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>New Order</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
+  <h2>New order received: {{ .Order.OrderNumber }}</h2>
+  <p><strong>Status:</strong> {{ .Order.Status }}</p>
+  <p><strong>Total amount:</strong> {{ formatPrice .Order.TotalAmount }}</p>
+  <p><strong>Shipping phone:</strong> {{ .Order.ShippingPhone }}</p>
+  <p><strong>Shipping address:</strong> {{ .Order.ShippingAddress }}</p>
+
+  <h3>Order items</h3>
+  <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+      <tr>
+        <th align="left">Product</th>
+        <th align="right">Price</th>
+        <th align="right">Qty</th>
+        <th align="right">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Order.Items }}
+      <tr>
+        <td>{{ .ProductName }}</td>
+        <td align="right">{{ formatPrice .ProductPrice }}</td>
+        <td align="right">{{ .Quantity }}</td>
+        <td align="right">{{ formatPrice .Subtotal }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</body>
+</html>

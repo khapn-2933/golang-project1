@@ -43,3 +43,19 @@ upload:
     - "png"
     - "webp"
 
+email:
+  enabled: true
+  smtp_host: "localhost"
+  smtp_port: 1025
+  username: ""
+  password: "" # use EMAIL_PASSWORD env var
+  from_email: "no-reply@foods-drinks.local"
+  from_name: "Foods & Drinks"
+  admin_recipient: "admin@foods-drinks.local"
+  subject_prefix: "[Foods & Drinks]"
+  order_template_path: "templates/email/new_order.html"
+  max_retries: 3
+  retry_delay_seconds: 3
+  max_workers: 4
+  queue_size: 100
+

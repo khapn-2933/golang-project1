@@ -28,13 +28,19 @@ type OrderService struct {
 	orderRepo   *repository.OrderRepository
 	cartRepo    *repository.CartRepository
 	productRepo *repository.ProductRepository
+	notifier    OrderNotifier
 }
 
-func NewOrderService(orderRepo *repository.OrderRepository, cartRepo *repository.CartRepository, productRepo *repository.ProductRepository) *OrderService {
+type OrderNotifier interface {
+	NotifyNewOrderAsync(order *dto.OrderResponse)
+}
+
+func NewOrderService(orderRepo *repository.OrderRepository, cartRepo *repository.CartRepository, productRepo *repository.ProductRepository, notifier OrderNotifier) *OrderService {
 	return &OrderService{
 		orderRepo:   orderRepo,
 		cartRepo:    cartRepo,
 		productRepo: productRepo,
+		notifier:    notifier,
 	}
 }
 
@@ -149,7 +155,16 @@ func (s *OrderService) CreateOrderFromCart(userID uint, req *dto.CreateOrderRequ
 		return nil, err
 	}
 
-	return s.GetOrderDetail(userID, createdOrderID)
+	order, err := s.GetOrderDetail(userID, createdOrderID)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.notifier != nil {
+		s.notifier.NotifyNewOrderAsync(order)
+	}
+
+	return order, nil
 }
 
 func (s *OrderService) ListOrders(userID uint, req *dto.OrderListRequest) (*dto.PaginatedResponse, error) {

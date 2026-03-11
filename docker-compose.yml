@@ -39,6 +39,14 @@ services:
       mysql:
         condition: service_healthy
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: foods_drinks_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
 volumes:
   mysql_data:
     driver: local

@@ -59,6 +59,7 @@ func main() {
 	productRepo := repository.NewProductRepository(db)
 	cartRepo := repository.NewCartRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
+	orderNotificationRepo := repository.NewOrderNotificationRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
 	suggestionRepo := repository.NewSuggestionRepository(db)
 
@@ -68,7 +69,8 @@ func main() {
 	profileService := service.NewProfileService(userRepo, &cfg.Upload, routes.UploadURLPrefix)
 	categoryService := service.NewCategoryService(categoryRepo)
 	productService := service.NewProductService(productRepo, categoryRepo)
-	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo)
+	emailNotificationService := service.NewEmailNotificationService(&cfg.Email, orderNotificationRepo)
+	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo, emailNotificationService)
 	ratingService := service.NewRatingService(ratingRepo, productRepo)
 	suggestionService := service.NewSuggestionService(suggestionRepo, categoryRepo)
 
