@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,6 +17,13 @@ import (
 )
 
 const defaultChatworkBaseURL = "https://api.chatwork.com"
+
+var chatworkTextSanitizer = strings.NewReplacer(
+	"[", "&#91;",
+	"]", "&#93;",
+)
+
+var chatworkLineBreakNormalizer = regexp.MustCompile(`\r\n|\r|\n`)
 
 type ChatworkNotificationService struct {
 	cfg              *config.ChatworkConfig
@@ -200,33 +208,44 @@ func (s *ChatworkNotificationService) markFailed(notificationID uint, err error)
 
 func (s *ChatworkNotificationService) formatMessage(order *dto.OrderResponse) string {
 	lines := []string{}
-	prefix := strings.TrimSpace(s.cfg.MessagePrefix)
+	prefix := sanitizeChatworkText(s.cfg.MessagePrefix)
 	if prefix != "" {
 		lines = append(lines, prefix)
 	}
 
 	lines = append(lines,
 		"[info][title]New Order[/title]",
-		fmt.Sprintf("Order number: %s", order.OrderNumber),
-		fmt.Sprintf("Status: %s", order.Status),
+		fmt.Sprintf("Order number: %s", sanitizeChatworkText(order.OrderNumber)),
+		fmt.Sprintf("Status: %s", sanitizeChatworkText(order.Status)),
 		fmt.Sprintf("Total amount: %.2f", order.TotalAmount),
-		fmt.Sprintf("Shipping phone: %s", order.ShippingPhone),
-		fmt.Sprintf("Shipping address: %s", order.ShippingAddress),
+		fmt.Sprintf("Shipping phone: %s", sanitizeChatworkText(order.ShippingPhone)),
+		fmt.Sprintf("Shipping address: %s", sanitizeChatworkText(order.ShippingAddress)),
 	)
 
 	if order.Notes != nil && strings.TrimSpace(*order.Notes) != "" {
-		lines = append(lines, fmt.Sprintf("Notes: %s", strings.TrimSpace(*order.Notes)))
+		lines = append(lines, fmt.Sprintf("Notes: %s", sanitizeChatworkText(*order.Notes)))
 	}
 
 	if len(order.Items) > 0 {
 		lines = append(lines, "", "Items:")
 		for idx, item := range order.Items {
 			lines = append(lines,
-				fmt.Sprintf("%d. %s x%d - %.2f", idx+1, item.ProductName, item.Quantity, item.Subtotal),
+				fmt.Sprintf("%d. %s x%d - %.2f", idx+1, sanitizeChatworkText(item.ProductName), item.Quantity, item.Subtotal),
 			)
 		}
 	}
 
 	lines = append(lines, "[/info]")
 	return strings.Join(lines, "\n")
+}
+
+func sanitizeChatworkText(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ""
+	}
+
+	// Keep message readable in line-oriented Chatwork body while neutralizing markup control chars.
+	normalized := chatworkLineBreakNormalizer.ReplaceAllString(trimmed, " ")
+	return chatworkTextSanitizer.Replace(normalized)
 }
