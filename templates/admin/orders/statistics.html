@@ -1,0 +1,169 @@
+{{ template "layout" . }}
+
+{{ define "page_content" }}
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Thống kê đơn hàng</h2>
+  </div>
+
+  <form method="GET" action="/admin/orders/statistics" class="filter-bar">
+    <div class="form-group">
+      <label class="form-label">Từ ngày</label>
+      <input type="date" name="from_date" class="form-control" value="{{ .Query.FromDate }}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Đến ngày</label>
+      <input type="date" name="to_date" class="form-control" value="{{ .Query.ToDate }}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Trạng thái</label>
+      <select name="status" class="form-control">
+        <option value="">Tất cả</option>
+        <option value="pending" {{ if eq .Query.Status "pending" }}selected{{ end }}>Chờ xác nhận</option>
+        <option value="confirmed" {{ if eq .Query.Status "confirmed" }}selected{{ end }}>Đã xác nhận</option>
+        <option value="processing" {{ if eq .Query.Status "processing" }}selected{{ end }}>Đang xử lý</option>
+        <option value="shipping" {{ if eq .Query.Status "shipping" }}selected{{ end }}>Đang giao</option>
+        <option value="delivered" {{ if eq .Query.Status "delivered" }}selected{{ end }}>Đã giao</option>
+        <option value="cancelled" {{ if eq .Query.Status "cancelled" }}selected{{ end }}>Đã hủy</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nhóm theo</label>
+      <select name="group_by" class="form-control">
+        <option value="day" {{ if eq .Query.GroupBy "day" }}selected{{ end }}>Ngày</option>
+        <option value="week" {{ if eq .Query.GroupBy "week" }}selected{{ end }}>Tuần</option>
+        <option value="month" {{ if eq .Query.GroupBy "month" }}selected{{ end }}>Tháng</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">&nbsp;</label>
+      <button type="submit" class="btn btn-outline">Lọc</button>
+    </div>
+  </form>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">
+    <div style="padding:14px;border:1px solid #ececec;border-radius:8px;background:#fafafa">
+      <div style="font-size:.78rem;color:#888">Tổng đơn</div>
+      <div style="font-size:1.2rem;font-weight:700">{{ .Summary.OrdersCount }}</div>
+    </div>
+    <div style="padding:14px;border:1px solid #ececec;border-radius:8px;background:#fafafa">
+      <div style="font-size:.78rem;color:#888">Doanh thu</div>
+      <div style="font-size:1.2rem;font-weight:700">{{ formatVND .Summary.RevenueAmount }}</div>
+    </div>
+    <div style="padding:14px;border:1px solid #ececec;border-radius:8px;background:#fafafa">
+      <div style="font-size:.78rem;color:#888">Giá trị TB / đơn</div>
+      <div style="font-size:1.2rem;font-weight:700">{{ formatVND .Summary.AverageOrder }}</div>
+    </div>
+    <div style="padding:14px;border:1px solid #ececec;border-radius:8px;background:#fafafa">
+      <div style="font-size:.78rem;color:#888">Đã giao / Đã hủy</div>
+      <div style="font-size:1.2rem;font-weight:700">{{ .Summary.DeliveredCount }} / {{ .Summary.CancelledCount }}</div>
+    </div>
+  </div>
+
+  <div style="border:1px solid #ececec;border-radius:8px;padding:12px">
+    <canvas id="ordersStatsChart" height="95"></canvas>
+  </div>
+
+  {{ if .Series }}
+  <table style="margin-top:18px">
+    <thead>
+      <tr>
+        <th>Kỳ</th>
+        <th>Số đơn</th>
+        <th>Doanh thu</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Series }}
+      <tr>
+        <td>{{ .PeriodLabel }}</td>
+        <td>{{ .OrdersCount }}</td>
+        <td>{{ formatVND .RevenueAmount }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+  <div style="text-align:center;padding:24px;color:#aaa">Không có dữ liệu trong khoảng lọc.</div>
+  {{ end }}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
+<script>
+  (function() {
+    const vndFormatter = new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0
+    });
+
+    const labels = {{ .LabelsJSON }};
+    const orders = {{ .OrdersJSON }};
+    const revenue = {{ .RevenueJSON }};
+
+    const ctx = document.getElementById('ordersStatsChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Số đơn',
+            data: orders,
+            backgroundColor: 'rgba(233,69,96,0.35)',
+            borderColor: '#e94560',
+            borderWidth: 1,
+            yAxisID: 'y'
+          },
+          {
+            type: 'line',
+            label: 'Doanh thu',
+            data: revenue,
+            borderColor: '#1f6feb',
+            backgroundColor: 'rgba(31,111,235,0.12)',
+            tension: 0.25,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                if (context.dataset.yAxisID === 'y1') {
+                  return context.dataset.label + ': ' + vndFormatter.format(context.parsed.y || 0);
+                }
+                return context.dataset.label + ': ' + (context.parsed.y || 0);
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            position: 'left',
+            title: { display: true, text: 'Số đơn' }
+          },
+          y1: {
+            beginAtZero: true,
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'Doanh thu (VND)' },
+            ticks: {
+              callback: function(value) {
+                return vndFormatter.format(value || 0);
+              }
+            }
+          }
+        }
+      }
+    });
+  })();
+</script>
+{{ end }}

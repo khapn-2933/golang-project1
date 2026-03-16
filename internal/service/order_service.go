@@ -17,11 +17,12 @@ import (
 )
 
 var (
-	ErrCartEmpty          = errors.New("cart is empty")
-	ErrOrderNotFound      = errors.New("order not found")
-	ErrInvalidDateFilter  = errors.New("invalid date filter")
-	ErrInvalidOrderInput  = errors.New("invalid order input")
-	ErrInvalidOrderStatus = errors.New("invalid order status transition")
+	ErrCartEmpty           = errors.New("cart is empty")
+	ErrOrderNotFound       = errors.New("order not found")
+	ErrInvalidDateFilter   = errors.New("invalid date filter")
+	ErrInvalidOrderInput   = errors.New("invalid order input")
+	ErrInvalidOrderStatus  = errors.New("invalid order status transition")
+	ErrInvalidStatusFilter = errors.New("invalid order status filter")
 )
 
 type OrderService struct {
@@ -328,6 +329,67 @@ func (s *OrderService) UpdateOrderStatusForAdmin(orderID uint, status string) er
 		return err
 	}
 	return nil
+}
+
+func (s *OrderService) GetStatisticsForAdmin(req *dto.AdminOrderStatisticsRequest) (*dto.AdminOrderStatisticsResponse, error) {
+	if req == nil {
+		req = &dto.AdminOrderStatisticsRequest{}
+	}
+
+	groupBy := strings.TrimSpace(req.GroupBy)
+	if groupBy == "" {
+		groupBy = "month"
+	}
+	if groupBy != "day" && groupBy != "week" && groupBy != "month" {
+		return nil, ErrInvalidOrderInput
+	}
+
+	status := strings.TrimSpace(req.Status)
+	if status != "" && !isValidOrderStatus(status) {
+		return nil, ErrInvalidStatusFilter
+	}
+
+	fromDate, toDate, err := parseOrderDateRange(req.FromDate, req.ToDate)
+	if err != nil {
+		return nil, err
+	}
+
+	params := repository.OrderStatisticsParams{
+		Status:   status,
+		FromDate: fromDate,
+		ToDate:   toDate,
+		GroupBy:  groupBy,
+	}
+
+	summaryRow, err := s.orderRepo.GetStatisticsSummary(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order statistics summary: %w", err)
+	}
+
+	seriesRows, err := s.orderRepo.GetStatisticsSeries(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order statistics series: %w", err)
+	}
+
+	series := make([]dto.AdminOrderStatisticsPoint, 0, len(seriesRows))
+	for _, row := range seriesRows {
+		series = append(series, dto.AdminOrderStatisticsPoint{
+			PeriodLabel:   row.PeriodLabel,
+			OrdersCount:   row.OrdersCount,
+			RevenueAmount: row.RevenueAmount,
+		})
+	}
+
+	return &dto.AdminOrderStatisticsResponse{
+		Summary: dto.AdminOrderStatisticsSummary{
+			OrdersCount:    summaryRow.OrdersCount,
+			RevenueAmount:  summaryRow.RevenueAmount,
+			AverageOrder:   summaryRow.AverageOrder,
+			DeliveredCount: summaryRow.DeliveredCount,
+			CancelledCount: summaryRow.CancelledCount,
+		},
+		Series: series,
+	}, nil
 }
 
 func (s *OrderService) toResponse(order *models.Order, includeItems bool) *dto.OrderResponse {

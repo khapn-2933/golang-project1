@@ -25,6 +25,7 @@ type RouterDependencies struct {
 	ProductHandler         *handler.ProductHandler
 	AdminProductHandler    *handler.AdminProductHandler
 	AdminOrderHandler      *handler.AdminOrderHandler
+	AdminOrderStatsHandler *handler.AdminOrderStatisticsHandler
 	AdminSuggestionHandler *handler.AdminSuggestionHandler
 	CartHandler            *handler.CartHandler
 	OrderHandler           *handler.OrderHandler
@@ -147,6 +148,7 @@ func SetupRouter(deps *RouterDependencies) *gin.Engine {
 
 		orders := adminSSR.Group("/orders")
 		{
+			orders.GET("/statistics", deps.AdminOrderStatsHandler.List)
 			orders.GET("", deps.AdminOrderHandler.List)
 			orders.GET("/:id", deps.AdminOrderHandler.Detail)
 			orders.POST("/:id/status", deps.AdminOrderHandler.UpdateStatus)

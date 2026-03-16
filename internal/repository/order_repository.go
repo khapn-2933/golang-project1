@@ -73,6 +73,27 @@ type AdminOrderListParams struct {
 	SortDir  string
 }
 
+type OrderStatisticsParams struct {
+	Status   string
+	FromDate *time.Time
+	ToDate   *time.Time
+	GroupBy  string
+}
+
+type OrderStatisticsSummaryRow struct {
+	OrdersCount    int64
+	RevenueAmount  float64
+	AverageOrder   float64
+	DeliveredCount int64
+	CancelledCount int64
+}
+
+type OrderStatisticsSeriesRow struct {
+	PeriodLabel   string
+	OrdersCount   int64
+	RevenueAmount float64
+}
+
 func (r *OrderRepository) ListByUserID(params OrderListParams) ([]models.Order, int64, error) {
 	var orders []models.Order
 	var total int64
@@ -209,4 +230,65 @@ func (r *OrderRepository) FindByIDForUpdate(id uint) (*models.Order, error) {
 
 func (r *OrderRepository) Update(order *models.Order) error {
 	return r.db.Save(order).Error
+}
+
+func (r *OrderRepository) GetStatisticsSummary(params OrderStatisticsParams) (OrderStatisticsSummaryRow, error) {
+	row := OrderStatisticsSummaryRow{}
+
+	query := r.db.Model(&models.Order{})
+	if params.Status != "" {
+		query = query.Where("status = ?", params.Status)
+	}
+	if params.FromDate != nil {
+		query = query.Where("created_at >= ?", *params.FromDate)
+	}
+	if params.ToDate != nil {
+		query = query.Where("created_at <= ?", *params.ToDate)
+	}
+
+	err := query.Select(
+		"COUNT(*) AS orders_count, " +
+			"COALESCE(SUM(total_amount), 0) AS revenue_amount, " +
+			"COALESCE(AVG(total_amount), 0) AS average_order, " +
+			"SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered_count, " +
+			"SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count",
+	).Scan(&row).Error
+
+	return row, err
+}
+
+func (r *OrderRepository) GetStatisticsSeries(params OrderStatisticsParams) ([]OrderStatisticsSeriesRow, error) {
+	rows := []OrderStatisticsSeriesRow{}
+
+	query := r.db.Model(&models.Order{})
+	if params.Status != "" {
+		query = query.Where("status = ?", params.Status)
+	}
+	if params.FromDate != nil {
+		query = query.Where("created_at >= ?", *params.FromDate)
+	}
+	if params.ToDate != nil {
+		query = query.Where("created_at <= ?", *params.ToDate)
+	}
+
+	periodExpr := "DATE_FORMAT(created_at, '%Y-%m')"
+
+	switch params.GroupBy {
+	case "day":
+		periodExpr = "DATE_FORMAT(created_at, '%Y-%m-%d')"
+	case "week":
+		periodExpr = "DATE_FORMAT(DATE_SUB(DATE(created_at), INTERVAL WEEKDAY(created_at) DAY), '%Y-%m-%d')"
+	case "month":
+		periodExpr = "DATE_FORMAT(created_at, '%Y-%m')"
+	}
+
+	base := query.Select(periodExpr + " AS period_value, total_amount")
+
+	err := r.db.Table("(?) AS order_periods", base).
+		Select("period_value AS period_label, COUNT(*) AS orders_count, COALESCE(SUM(total_amount), 0) AS revenue_amount").
+		Group("period_value").
+		Order("period_value ASC").
+		Scan(&rows).Error
+
+	return rows, err
 }
