@@ -59,3 +59,15 @@ email:
   max_workers: 4
   queue_size: 100
 
+chatwork:
+  enabled: false
+  base_url: "https://api.chatwork.com"
+  api_token: "" # use CHATWORK_API_TOKEN env var
+  room_id: ""
+  message_prefix: "[Foods & Drinks]"
+  max_retries: 3
+  retry_delay_seconds: 3
+  max_workers: 2
+  queue_size: 100
+  timeout_seconds: 5
+

@@ -17,6 +17,7 @@ type Config struct {
 	OAuth    OAuthConfig    `mapstructure:"oauth"`
 	Upload   UploadConfig   `mapstructure:"upload"`
 	Email    EmailConfig    `mapstructure:"email"`
+	Chatwork ChatworkConfig `mapstructure:"chatwork"`
 }
 
 type EmailConfig struct {
@@ -34,6 +35,19 @@ type EmailConfig struct {
 	RetryDelaySeconds int    `mapstructure:"retry_delay_seconds"`
 	MaxWorkers        int    `mapstructure:"max_workers"`
 	QueueSize         int    `mapstructure:"queue_size"`
+}
+
+type ChatworkConfig struct {
+	Enabled           bool   `mapstructure:"enabled"`
+	BaseURL           string `mapstructure:"base_url"`
+	APIToken          string `mapstructure:"api_token"`
+	RoomID            string `mapstructure:"room_id"`
+	MessagePrefix     string `mapstructure:"message_prefix"`
+	MaxRetries        int    `mapstructure:"max_retries"`
+	RetryDelaySeconds int    `mapstructure:"retry_delay_seconds"`
+	MaxWorkers        int    `mapstructure:"max_workers"`
+	QueueSize         int    `mapstructure:"queue_size"`
+	TimeoutSeconds    int    `mapstructure:"timeout_seconds"`
 }
 
 type UploadConfig struct {
@@ -109,6 +123,10 @@ func applySensitiveEnvOverrides(cfg *Config) {
 
 	if value := strings.TrimSpace(os.Getenv("EMAIL_PASSWORD")); value != "" {
 		cfg.Email.Password = value
+	}
+
+	if value := strings.TrimSpace(os.Getenv("CHATWORK_API_TOKEN")); value != "" {
+		cfg.Chatwork.APIToken = value
 	}
 
 	if value := strings.TrimSpace(os.Getenv("DATABASE_PASSWORD")); value != "" {

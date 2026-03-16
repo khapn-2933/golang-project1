@@ -47,6 +47,17 @@ services:
       - "1025:1025" # SMTP
       - "8025:8025" # Web UI
 
+  chatwork-mock:
+    image: wiremock/wiremock:3.9.1
+    container_name: foods_drinks_chatwork_mock
+    restart: unless-stopped
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./docker/wiremock:/home/wiremock
+    command:
+      - --verbose
+
 volumes:
   mysql_data:
     driver: local

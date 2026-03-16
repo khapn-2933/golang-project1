@@ -60,6 +60,7 @@ Set secrets via environment variables (recommended):
 export DATABASE_PASSWORD="your-db-password"
 export JWT_SECRET="your-jwt-secret"
 export EMAIL_PASSWORD="your-smtp-password"
+export CHATWORK_API_TOKEN="your-chatwork-token"
 ```
 
 Cập nhật thông tin database trong `config.yaml`:
@@ -158,6 +159,36 @@ docker compose up -d
 ```
 
 Then run server and create a new order. Email notification will be sent to MailHog and you can view it in the UI at `http://localhost:8025`.
+
+## Test Chatwork Notification Locally
+
+`docker-compose.yml` now includes a WireMock service to simulate Chatwork API at `http://localhost:8089`.
+
+Note: this is a mock API server (WireMock), not the real Chatwork web UI. You can inspect mappings and requests via `http://localhost:8089/__admin`.
+
+Use this config snippet in `config.yaml`:
+
+```yaml
+chatwork:
+  enabled: true
+  base_url: "http://localhost:8089"
+  api_token: "local-chatwork-token"
+  room_id: "dev-room"
+  message_prefix: "[Foods & Drinks]"
+  max_retries: 3
+  retry_delay_seconds: 3
+  max_workers: 2
+  queue_size: 100
+  timeout_seconds: 5
+```
+
+Start containers:
+
+```bash
+docker compose up -d
+```
+
+When creating a new order, app will send a POST request to `/v2/rooms/{room_id}/messages` on WireMock and log status in `order_notifications` with type `chatwork`.
 
 ## Database Schema
 

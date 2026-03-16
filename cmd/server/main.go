@@ -70,7 +70,9 @@ func main() {
 	categoryService := service.NewCategoryService(categoryRepo)
 	productService := service.NewProductService(productRepo, categoryRepo)
 	emailNotificationService := service.NewEmailNotificationService(&cfg.Email, orderNotificationRepo)
-	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo, emailNotificationService)
+	chatworkNotificationService := service.NewChatworkNotificationService(&cfg.Chatwork, orderNotificationRepo)
+	notifier := service.NewMultiOrderNotifier(emailNotificationService, chatworkNotificationService)
+	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo, notifier)
 	ratingService := service.NewRatingService(ratingRepo, productRepo)
 	suggestionService := service.NewSuggestionService(suggestionRepo, categoryRepo)
 
