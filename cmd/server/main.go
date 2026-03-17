@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	_ "github.com/kha/foods-drinks/docs"
 	"github.com/kha/foods-drinks/internal/config"
 	"github.com/kha/foods-drinks/internal/handler"
 	"github.com/kha/foods-drinks/internal/middleware"
@@ -19,7 +20,18 @@ import (
 	"github.com/kha/foods-drinks/internal/service"
 	"github.com/kha/foods-drinks/pkg/database"
 	customValidator "github.com/kha/foods-drinks/pkg/validator"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Foods & Drinks API
+// @version 1.0
+// @description API documentation for Foods & Drinks.
+// @BasePath /
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	cfg, err := config.LoadConfig("config.yaml")
@@ -167,6 +179,7 @@ func main() {
 		UploadPath:             cfg.Upload.Path,
 	}
 	router := routes.SetupRouter(deps)
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	addr := fmt.Sprintf(":%d", cfg.App.Port)
 	log.Printf("Server %s starting on %s", cfg.App.Name, addr)

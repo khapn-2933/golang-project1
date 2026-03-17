@@ -46,7 +46,7 @@ func (h *OAuthHandler) GetProviders(c *gin.Context) {
 // @Param provider path string true "OAuth provider (google, facebook, twitter)"
 // @Success 200 {object} dto.OAuthURLResponse
 // @Failure 400 {object} dto.ErrorResponse
-// @Router /api/v1/auth/{provider} [get]
+// @Router /api/v1/auth/oauth/{provider} [get]
 func (h *OAuthHandler) InitiateOAuth(c *gin.Context) {
 	provider := c.Param("provider")
 
@@ -105,7 +105,7 @@ func (h *OAuthHandler) InitiateOAuth(c *gin.Context) {
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/auth/{provider}/callback [get]
+// @Router /api/v1/auth/oauth/{provider}/callback [get]
 func (h *OAuthHandler) HandleCallback(c *gin.Context) {
 	provider := c.Param("provider")
 

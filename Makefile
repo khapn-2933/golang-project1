@@ -1,4 +1,4 @@
-.PHONY: build run migrate-up migrate-down migrate-version test clean
+.PHONY: build run migrate-up migrate-down migrate-version test clean swagger
 
 # Build the server
 build:
@@ -45,6 +45,12 @@ clean:
 deps:
 	go mod download
 	go mod tidy
+
+# Generate Swagger docs
+swagger:
+	rm -rf docs
+	mkdir -p docs
+	docker run --rm -u $$(id -u):$$(id -g) -e GOCACHE=/tmp/go-build -e GOPATH=/tmp/go -v "$$(pwd)":/app -w /app golang:1.24 sh -c 'go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g main.go -d cmd/server,internal/handler,internal/dto,internal/middleware -o docs --parseDependency --parseInternal'
 
 # Create new migration
 # Usage: make create-migration NAME=create_xxx_table

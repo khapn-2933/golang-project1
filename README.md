@@ -99,6 +99,18 @@ make run
 go run ./cmd/server
 ```
 
+## Swagger / OpenAPI
+
+Swagger UI đã được bật tại:
+
+- `http://localhost:8000/swagger/index.html`
+
+Generate lại tài liệu sau khi đổi annotation:
+
+```bash
+make swagger
+```
+
 ## Migration Commands
 
 ```bash
