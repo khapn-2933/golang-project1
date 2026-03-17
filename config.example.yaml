@@ -71,3 +71,10 @@ chatwork:
   queue_size: 100
   timeout_seconds: 5
 
+scheduler:
+  enabled: true
+  # Chạy lúc 05:00 ngày 1 mỗi tháng, báo cáo tháng trước
+  monthly_cron: "0 5 1 * *"
+  admin_recipient: "admin@foods-drinks.local"
+  report_template_path: "templates/email/monthly_report.html"
+

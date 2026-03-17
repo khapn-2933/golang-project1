@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Báo cáo thống kê tháng {{ .MonthLabel }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #222; max-width: 680px; margin: 0 auto; padding: 16px;">
+  <h2 style="color: #1a1a2e;">Báo cáo thống kê đơn hàng — Tháng {{ .MonthLabel }}</h2>
+  <p>Kính gửi Admin,</p>
+  <p>Dưới đây là tổng kết đơn hàng trong tháng <strong>{{ .MonthLabel }}</strong>.</p>
+
+  <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 4px;">Tổng quan</h3>
+  <table cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <tbody>
+      <tr style="background:#f5f5f5;">
+        <td style="border:1px solid #ddd;"><strong>Tổng đơn hàng</strong></td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ .Summary.OrdersCount }}</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #ddd;"><strong>Doanh thu</strong></td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ formatVND .Summary.RevenueAmount }}</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td style="border:1px solid #ddd;"><strong>Giá trị trung bình / đơn</strong></td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ formatVND .Summary.AverageOrder }}</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #ddd;"><strong>Đơn đã giao</strong></td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ .Summary.DeliveredCount }}</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td style="border:1px solid #ddd;"><strong>Đơn đã huỷ</strong></td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ .Summary.CancelledCount }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {{ if .Series }}
+  <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 24px;">Chi tiết theo tuần</h3>
+  <table cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+      <tr style="background:#1a1a2e; color:#fff;">
+        <th style="border:1px solid #ddd; text-align:left;">Tuần</th>
+        <th style="border:1px solid #ddd; text-align:right;">Số đơn</th>
+        <th style="border:1px solid #ddd; text-align:right;">Doanh thu</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range $i, $row := .Series }}
+      <tr {{ if isEven $i }}style="background:#f9f9f9;"{{ end }}>
+        <td style="border:1px solid #ddd;">{{ $row.PeriodLabel }}</td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ $row.OrdersCount }}</td>
+        <td style="border:1px solid #ddd; text-align:right;">{{ formatVND $row.RevenueAmount }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ end }}
+
+  <p style="margin-top: 32px; color: #666; font-size: 12px;">
+    Email này được gửi tự động bởi hệ thống Foods &amp; Drinks.<br/>
+    Vui lòng không trả lời email này.
+  </p>
+</body>
+</html>

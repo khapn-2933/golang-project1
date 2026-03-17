@@ -11,13 +11,14 @@ import (
 )
 
 type Config struct {
-	App      AppConfig      `mapstructure:"app"`
-	Database DatabaseConfig `mapstructure:"database"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	OAuth    OAuthConfig    `mapstructure:"oauth"`
-	Upload   UploadConfig   `mapstructure:"upload"`
-	Email    EmailConfig    `mapstructure:"email"`
-	Chatwork ChatworkConfig `mapstructure:"chatwork"`
+	App       AppConfig       `mapstructure:"app"`
+	Database  DatabaseConfig  `mapstructure:"database"`
+	JWT       JWTConfig       `mapstructure:"jwt"`
+	OAuth     OAuthConfig     `mapstructure:"oauth"`
+	Upload    UploadConfig    `mapstructure:"upload"`
+	Email     EmailConfig     `mapstructure:"email"`
+	Chatwork  ChatworkConfig  `mapstructure:"chatwork"`
+	Scheduler SchedulerConfig `mapstructure:"scheduler"`
 }
 
 type EmailConfig struct {
@@ -48,6 +49,13 @@ type ChatworkConfig struct {
 	MaxWorkers        int    `mapstructure:"max_workers"`
 	QueueSize         int    `mapstructure:"queue_size"`
 	TimeoutSeconds    int    `mapstructure:"timeout_seconds"`
+}
+
+type SchedulerConfig struct {
+	Enabled            bool   `mapstructure:"enabled"`
+	MonthlyCron        string `mapstructure:"monthly_cron"`
+	AdminRecipient     string `mapstructure:"admin_recipient"`
+	ReportTemplatePath string `mapstructure:"report_template_path"`
 }
 
 type UploadConfig struct {

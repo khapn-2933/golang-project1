@@ -78,6 +78,10 @@ func main() {
 	ratingService := service.NewRatingService(ratingRepo, productRepo)
 	suggestionService := service.NewSuggestionService(suggestionRepo, categoryRepo)
 
+	scheduler := service.NewMonthlyReportScheduler(&cfg.Scheduler, &cfg.Email, orderService)
+	scheduler.Start()
+	defer scheduler.Stop()
+
 	funcMap := template.FuncMap{
 		"inc": func(i int) int { return i + 1 },
 		"dec": func(i int) int { return i - 1 },
