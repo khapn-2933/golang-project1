@@ -46,6 +46,12 @@ func NewAuthService(userRepo *repository.UserRepository, cartService *CartServic
 	}
 }
 
+// NewAuthServiceWithConfig creates an AuthService with only JWT config (for token operations).
+// Intended for use in tests that only exercise GenerateToken/ValidateToken.
+func NewAuthServiceWithConfig(jwtConfig *config.JWTConfig) *AuthService {
+	return &AuthService{jwtConfig: jwtConfig}
+}
+
 // Register creates a new user account
 func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, error) {
 	// Check if email already exists
