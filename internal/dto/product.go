@@ -13,7 +13,6 @@ type ProductImageResponse struct {
 type ProductSocialShareResponse struct {
 	Facebook string `json:"facebook"`
 	Twitter  string `json:"twitter"`
-	Google   string `json:"google"`
 }
 
 type ProductResponse struct {

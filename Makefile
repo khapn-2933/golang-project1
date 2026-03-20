@@ -78,7 +78,7 @@ deps:
 swagger:
 	rm -rf docs
 	mkdir -p docs
-	docker run --rm -u $$(id -u):$$(id -g) -e GOCACHE=/tmp/go-build -e GOPATH=/tmp/go -v "$$(pwd)":/app -w /app golang:1.24 sh -c 'go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g main.go -d cmd/server,internal/handler,internal/dto,internal/middleware -o docs --parseDependency --parseInternal'
+	docker run --rm -u $$(id -u):$$(id -g) -e GOCACHE=/tmp/go-build -e GOPATH=/tmp/go -v "$$(pwd)":/app -w /app golang:1.24 sh -c 'cd cmd/server && go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g main.go -d .,../../internal/handler,../../internal/dto,../../internal/middleware -o ../../docs --parseDependency --parseInternal'
 
 # Create new migration
 # Usage: make create-migration NAME=create_xxx_table

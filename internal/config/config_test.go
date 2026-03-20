@@ -3,18 +3,28 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestDatabaseConfigDSN(t *testing.T) {
-	t.Parallel()
+	// Uses process environment via t.Setenv; do not run in parallel.
+	t.Setenv("TEST_DATABASE_HOST", "127.0.0.1")
+	t.Setenv("TEST_DATABASE_PORT", "3306")
+	t.Setenv("TEST_DATABASE_USERNAME", "user name")
+	t.Setenv("TEST_DATABASE_PASSWORD", "p@ss word")
+
+	port, err := strconv.Atoi(os.Getenv("TEST_DATABASE_PORT"))
+	if err != nil {
+		t.Fatalf("parse TEST_DATABASE_PORT: %v", err)
+	}
 
 	db := &DatabaseConfig{
-		Host:      "127.0.0.1",
-		Port:      3306,
-		Username:  "user name",
-		Password:  "p@ss word",
+		Host:      os.Getenv("TEST_DATABASE_HOST"),
+		Port:      port,
+		Username:  os.Getenv("TEST_DATABASE_USERNAME"),
+		Password:  os.Getenv("TEST_DATABASE_PASSWORD"),
 		DBName:    "foods",
 		Charset:   "utf8mb4",
 		ParseTime: true,

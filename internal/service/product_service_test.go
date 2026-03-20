@@ -123,17 +123,10 @@ func TestBuildSocialShare(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse twitter share url: %v", err)
 	}
-	ggURL, err := url.Parse(share.Google)
-	if err != nil {
-		t.Fatalf("parse google share url: %v", err)
-	}
 
 	wantProductURL := "https://foods.example.com/products/pho-bo"
 	if got := fbURL.Query().Get("u"); got != wantProductURL {
 		t.Fatalf("facebook shared url = %q, want %q", got, wantProductURL)
-	}
-	if got := ggURL.Query().Get("url"); got != wantProductURL {
-		t.Fatalf("google shared url = %q, want %q", got, wantProductURL)
 	}
 	if got := twURL.Query().Get("url"); got != wantProductURL {
 		t.Fatalf("twitter shared url = %q, want %q", got, wantProductURL)

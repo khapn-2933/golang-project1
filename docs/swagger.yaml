@@ -258,8 +258,6 @@ definitions:
     properties:
       facebook:
         type: string
-      google:
-        type: string
       twitter:
         type: string
     type: object

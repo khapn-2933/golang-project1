@@ -179,7 +179,9 @@ func main() {
 		UploadPath:             cfg.Upload.Path,
 	}
 	router := routes.SetupRouter(deps)
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	if cfg.App.Env != "production" {
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.App.Port)
 	log.Printf("Server %s starting on %s", cfg.App.Name, addr)

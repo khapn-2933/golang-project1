@@ -1709,9 +1709,6 @@ const docTemplate = `{
                 "facebook": {
                     "type": "string"
                 },
-                "google": {
-                    "type": "string"
-                },
                 "twitter": {
                     "type": "string"
                 }

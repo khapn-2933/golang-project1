@@ -332,7 +332,6 @@ func (s *ProductService) buildSocialShare(p *models.Product) dto.ProductSocialSh
 	return dto.ProductSocialShareResponse{
 		Facebook: "https://www.facebook.com/sharer/sharer.php?u=" + encodedProductURL,
 		Twitter:  "https://twitter.com/intent/tweet?url=" + encodedProductURL + "&text=" + encodedShareText,
-		Google:   "https://plus.google.com/share?url=" + encodedProductURL,
 	}
 }
 
