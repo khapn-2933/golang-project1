@@ -32,8 +32,7 @@ tmp/
 *.tmp
 
 # Coverage
-coverage.out
-coverage.html
+coverage.*
 
 # Air live reload
 .air.toml

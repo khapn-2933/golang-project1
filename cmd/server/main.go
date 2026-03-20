@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	_ "github.com/kha/foods-drinks/docs"
 	"github.com/kha/foods-drinks/internal/config"
 	"github.com/kha/foods-drinks/internal/handler"
 	"github.com/kha/foods-drinks/internal/middleware"
@@ -19,7 +20,18 @@ import (
 	"github.com/kha/foods-drinks/internal/service"
 	"github.com/kha/foods-drinks/pkg/database"
 	customValidator "github.com/kha/foods-drinks/pkg/validator"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Foods & Drinks API
+// @version 1.0
+// @description API documentation for Foods & Drinks.
+// @BasePath /
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	cfg, err := config.LoadConfig("config.yaml")
@@ -70,7 +82,7 @@ func main() {
 	oauthService := service.NewOAuthService(userRepo, socialAuthRepo, cartRepo, authService, &cfg.OAuth)
 	profileService := service.NewProfileService(userRepo, &cfg.Upload, routes.UploadURLPrefix)
 	categoryService := service.NewCategoryService(categoryRepo)
-	productService := service.NewProductService(productRepo, categoryRepo)
+	productService := service.NewProductService(productRepo, categoryRepo, cfg.App.BaseURL)
 	emailNotificationService := service.NewEmailNotificationService(&cfg.Email, orderNotificationRepo)
 	chatworkNotificationService := service.NewChatworkNotificationService(&cfg.Chatwork, orderNotificationRepo)
 	notifier := service.NewMultiOrderNotifier(emailNotificationService, chatworkNotificationService)
@@ -167,6 +179,9 @@ func main() {
 		UploadPath:             cfg.Upload.Path,
 	}
 	router := routes.SetupRouter(deps)
+	if cfg.App.Env != "production" {
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.App.Port)
 	log.Printf("Server %s starting on %s", cfg.App.Name, addr)

@@ -65,9 +65,10 @@ type UploadConfig struct {
 }
 
 type AppConfig struct {
-	Name string `mapstructure:"name"`
-	Env  string `mapstructure:"env"`
-	Port int    `mapstructure:"port"`
+	Name    string `mapstructure:"name"`
+	Env     string `mapstructure:"env"`
+	Port    int    `mapstructure:"port"`
+	BaseURL string `mapstructure:"base_url"`
 }
 
 type DatabaseConfig struct {

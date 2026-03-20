@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -27,10 +28,13 @@ var (
 type ProductService struct {
 	productRepo  *repository.ProductRepository
 	categoryRepo *repository.CategoryRepository
+	baseURL      string
 }
 
-func NewProductService(productRepo *repository.ProductRepository, categoryRepo *repository.CategoryRepository) *ProductService {
-	return &ProductService{productRepo: productRepo, categoryRepo: categoryRepo}
+func NewProductService(productRepo *repository.ProductRepository, categoryRepo *repository.CategoryRepository, baseURL string) *ProductService {
+	baseURL = strings.TrimSpace(baseURL)
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &ProductService{productRepo: productRepo, categoryRepo: categoryRepo, baseURL: baseURL}
 }
 
 func (s *ProductService) Create(req *dto.CreateProductRequest, imageURLs []string) (*dto.ProductResponse, error) {
@@ -286,6 +290,7 @@ func (s *ProductService) toResponse(p *models.Product) *dto.ProductResponse {
 		RatingAverage: p.RatingAverage,
 		RatingCount:   p.RatingCount,
 		Status:        p.Status,
+		SocialShare:   s.buildSocialShare(p),
 		CreatedAt:     p.CreatedAt,
 		UpdatedAt:     p.UpdatedAt,
 	}
@@ -315,4 +320,31 @@ func (s *ProductService) toResponse(p *models.Product) *dto.ProductResponse {
 	}
 
 	return resp
+}
+
+func (s *ProductService) buildSocialShare(p *models.Product) dto.ProductSocialShareResponse {
+	productURL := s.buildProductURL(p.Slug)
+	shareText := fmt.Sprintf("Khám phá %s tại Foods & Drinks", strings.TrimSpace(p.Name))
+
+	encodedProductURL := url.QueryEscape(productURL)
+	encodedShareText := url.QueryEscape(shareText)
+
+	return dto.ProductSocialShareResponse{
+		Facebook: "https://www.facebook.com/sharer/sharer.php?u=" + encodedProductURL,
+		Twitter:  "https://twitter.com/intent/tweet?url=" + encodedProductURL + "&text=" + encodedShareText,
+	}
+}
+
+func (s *ProductService) buildProductURL(slug string) string {
+	baseURL := s.baseURL
+	if baseURL == "" {
+		baseURL = "http://localhost:8000"
+	}
+
+	slug = strings.TrimSpace(slug)
+	if slug == "" {
+		return baseURL
+	}
+
+	return baseURL + "/products/" + url.PathEscape(slug)
 }

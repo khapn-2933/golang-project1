@@ -10,23 +10,29 @@ type ProductImageResponse struct {
 	IsPrimary bool    `json:"is_primary"`
 }
 
+type ProductSocialShareResponse struct {
+	Facebook string `json:"facebook"`
+	Twitter  string `json:"twitter"`
+}
+
 type ProductResponse struct {
-	ID            uint                   `json:"id"`
-	CategoryID    uint                   `json:"category_id"`
-	CategoryName  string                 `json:"category_name,omitempty"`
-	Name          string                 `json:"name"`
-	Slug          string                 `json:"slug"`
-	Description   *string                `json:"description,omitempty"`
-	Classify      string                 `json:"classify"`
-	Price         float64                `json:"price"`
-	Stock         int                    `json:"stock"`
-	RatingAverage float64                `json:"rating_average"`
-	RatingCount   int                    `json:"rating_count"`
-	Status        string                 `json:"status"`
-	Images        []ProductImageResponse `json:"images,omitempty"`
-	PrimaryImage  *ProductImageResponse  `json:"primary_image,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at"`
+	ID            uint                       `json:"id"`
+	CategoryID    uint                       `json:"category_id"`
+	CategoryName  string                     `json:"category_name,omitempty"`
+	Name          string                     `json:"name"`
+	Slug          string                     `json:"slug"`
+	Description   *string                    `json:"description,omitempty"`
+	Classify      string                     `json:"classify"`
+	Price         float64                    `json:"price"`
+	Stock         int                        `json:"stock"`
+	RatingAverage float64                    `json:"rating_average"`
+	RatingCount   int                        `json:"rating_count"`
+	Status        string                     `json:"status"`
+	Images        []ProductImageResponse     `json:"images,omitempty"`
+	PrimaryImage  *ProductImageResponse      `json:"primary_image,omitempty"`
+	SocialShare   ProductSocialShareResponse `json:"social_share"`
+	CreatedAt     time.Time                  `json:"created_at"`
+	UpdatedAt     time.Time                  `json:"updated_at"`
 }
 
 type CreateProductRequest struct {
